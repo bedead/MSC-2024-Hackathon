@@ -1,0 +1,276 @@
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/2.3.0/alpine.js"
+            defer></script>
+        <title>Dashboard | Karm</title>
+        <link rel="icon" type="image/png"
+            href="/static/favicon/favicon-32x32.png" sizes="32x32">
+        <link rel="icon" type="image/png"
+            href="/static/favicon/favicon-16x16.png" sizes="16x16">
+        <link rel="manifest" href="/static/favicon/site.webmanifest">
+        <link rel="apple-touch-icon"
+            href="/static/favicon/apple-touch-icon.png">
+    </head>
+    <body>
+        <!-- {{ is_admin }}
+        {{ username }}
+        {{ num_tasks }}
+        {{ num_todolists }}
+        {{ num_teams }}
+        {{ num_projects }} -->
+
+        <div id="create_task_dialog"
+            class="fixed hidden z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-60 backdrop-blur-sm duration-300">
+            <form method="post" action="{{url_for('dashboard.home')}}"
+                data-dialog="sign-in-dialog"
+                class="relative mx-auto flex w-full max-w-[24rem] flex-col rounded-xl bg-white bg-clip-border text-gray-700 shadow-md">
+                <div class="flex flex-col gap-4 p-6">
+                    <h4
+                        class="block font-sans text-2xl antialiased font-semibold leading-snug tracking-normal text-blue-gray-900">
+                        Create Task
+                    </h4>
+                    <p
+                        class="block mb-3 font-sans text-base antialiased font-normal leading-relaxed text-gray-700">
+                        Assign task to members/employees.
+                    </p>
+                    <div class="relative h-30 w-full min-w-[200px]">
+                        <input name="task_name"
+                            class="w-full px-3 py-3 font-sans text-sm font-normal transition-all bg-transparent border rounded-md peer border-blue-gray-200 border-t-transparent text-blue-gray-700 outline outline-0 placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-gray-900 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50"
+                            placeholder="Task Name" />
+                        <textarea
+                            name="task_desc"
+                            class="w-full  px-3 py-3 font-sans text-sm font-normal transition-all bg-transparent border rounded-md peer border-blue-gray-200 border-t-transparent text-blue-gray-700 outline outline-0 placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 focus:border-2 focus:border-gray-900 focus:border-t-transparent focus:outline-0 disabled:border-0 disabled:bg-blue-gray-50"
+                            placeholder="Task Description"></textarea>
+                    </div>
+                </div>
+                <div class="p-6 pt-0 flex gap-4">
+                    <button
+                        class="block w-full rounded-lg bg-gradient-to-tr from-gray-900 to-gray-800 py-3 px-6 text-center align-middle font-sans text-xs font-bold uppercase text-white shadow-md shadow-gray-900/10 transition-all hover:shadow-lg hover:shadow-gray-900/20 active:opacity-[0.85]"
+                        type="submit">
+                        Submit
+                    </button>
+                    <button
+                        onclick="toggleCreateTaskDialog()"
+                        class="block w-full rounded-lg bg-orange-400 py-3 px-6 text-center text-white"
+                        type="button">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sidebar Menu -->
+        <div class="mx-10 my-6 flex justify-between items-center mb-6 gap-4">
+            <div class="flex justify-start items-center">
+                <div id="sidebar_menu"
+                    x-data="{open: false }">
+                    <!-- Sidebar menu button -->
+                    <button @click="open =! open" title="Menu" type="button"
+                        id="SideMenu"
+                        class="flex items-center px-3 py-2 border rounded text-teal-200 border-teal-400 hover:text-white hover:border-white m-2">
+                        <svg class="h-5 w-5" viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <title>Menu</title>
+                            <path
+                                d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z" />
+                        </svg>
+                    </button>
+                    <!-- Sidebar -->
+                    <div :class="{'hidden': !open }" id="Sidebar_section"
+                        class="absolute z-[999] left-10 top-24 h-64 w-40 rounded-lg bg-blue-700 rounded-md bg-clip-padding backdrop-filter backdrop-blur-xl bg-opacity-10 border border-gray-100
+            border border-gray-800 border-[2px] text-black p-4">
+                        <ul class="space-y-4">
+                            <li>
+                                <a
+                                    href="{{ url_for('dashboard.create_team') }}"
+                                    class="block">Create Teams</a>
+                            </li>
+                            <li>
+                                <a href=" {{ url_for('dashboard.home') }} "
+                                    class="block">Create Tasks</a>
+                            </li>
+                            <li>
+                                <a
+                                    href="{{ url_for('dashboard.show_emp') }}"
+                                    class="block">View Employees</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="dropdown inline-block relative">
+                    <select title="Select Project"
+                        class="bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded inline-flex items-center">
+                        <option>Project 1</option>
+                        <option>Project 2</option>
+                        <option>Project 3</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-evenly items-center gap-4">
+                {% if is_admin == 0 %}
+                <div id="timer"
+                    class="text-gray-700 font-semibold py-2 px-4">00:00:00</div>
+                <button id="start-timer-button"
+                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Start
+                    Timer</button>
+                <button id="stop-timer-button"
+                    class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Stop
+                    Timer</button>
+                {% endif %}
+                <div id="user_menu" class="relative"
+                    x-data="{open: false }">
+                    <button @click="open =! open"
+                        class="relative z-10 block h-8 w-8 rounded-full overflow-hidden shadow focus:outline-none">
+                        <img class="h-full w-full object-cover"
+                            src="https://avatars0.githubusercontent.com/u/4323180?s=180&v=4"
+                            alt="Your avatar">
+                    </button>
+                    <div :class="{'hidden': !open }"
+                        class="absolute right-0 mt-2 py-2 w-48 bg-white rounded-md shadow-xl z-20">
+                        <a href="#"
+                            class="block px-4 py-2 text-sm capitalize text-gray-700 hover:bg-blue-500 hover:text-white">
+                            Your profile
+                        </a>
+                        <a href="#"
+                            class="block px-4 py-2 text-sm capitalize text-gray-700 hover:bg-blue-500 hover:text-white">
+                            Settings
+                        </a>
+                        <a href="{{ url_for('auth_page.logout') }}"
+                            class="block px-4 py-2 text-sm capitalize text-gray-700 hover:bg-blue-500 hover:text-white">
+                            Sign out
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-16 flex-row justify-center items-center">
+            <div class="flex justify-between">
+                <div class="flex justify-start w-[70%] items-start gap-14">
+                    <div class="mb-6">
+                        <button
+                            class="tab bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Today</button>
+                        <div class="py-4 ">
+
+                            {% for task in tasks %}
+                            <div
+                                class="py-6 px-4 flex-col bg-gray-200 rounded-lg shadow-lg mb-4">
+                                <p>Task ID: {{task[0]}}</p>
+                                <p>User name: {{task[1]}}</p>
+                                <p>Task name: {{task[2]}}</p>
+                                <p>Task Description: {{task[3]}}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                    <div class="mb-6">
+                        <button
+                            class="tab bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Tomorrow</button>
+                    </div>
+                    <div class="mb-6">
+                        <button
+                            class="tab bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Pending</button>
+                    </div>
+                    <div class="mb-6">
+                        <button
+                            class="tab bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Under
+                            progress</button>
+                    </div>
+                    <div class="mb-6">
+                        <button
+                            class="tab bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Completed</button>
+                    </div>
+                </div>
+                <div class="bg-gray-100 w-[30%] h-fit rounded-lg p-4 shadow-lg mb-4">
+                    <form method="post"
+                        action="{{url_for('dashboard.auto_assign_task')}}">
+                        <h1 class="text-2xl">
+                            Automatic task assignment
+                        </h1>
+                        <p class="mb-4">Assign recently created task to a
+                            certain team and all its members.</p>
+                        <select name="team_name"
+                            class="relative mb-4 h-30 w-full min-w-[200px]">
+                            {% for team in teams %}
+                            <option value="{{team[2]}}">
+                                {{team[2]}}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="p-6 pt-0 flex">
+                            <button
+                                class="block w-full rounded-lg bg-gradient-to-tr from-gray-900 to-gray-800 py-3 px-6 text-center align-middle font-sans text-xs font-bold uppercase text-white shadow-md shadow-gray-900/10 transition-all hover:shadow-lg hover:shadow-gray-900/20 active:opacity-[0.85]"
+                                type="submit">
+                                Submit
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if is_admin == True %}
+            <div class="add-task mt-6">
+                <button onclick="toggleCreateTaskDialog()" id="add_tas_button"
+                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Add
+                    Task</button>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <script>
+            let timer = document.getElementById('timer');
+            let startTimerButton = document.getElementById('start-timer-button');
+            let stopTimerButton = document.getElementById('stop-timer-button');
+            let sec = 0, min = 0, hour = 0;
+            let timerInterval;
+            startTimerButton.addEventListener('click', function () {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+                timerInterval = setInterval(function () {
+                    sec++;
+                    if (sec == 60) {
+                        min++;
+                        sec = 0;
+                    }
+                    if (min == 60) {
+                        hour++;
+                        min = 0;
+                    }
+                    timer.textContent = (hour < 10 ? "0" + hour : hour) + ":" + (min < 10 ? "0" + min : min) + ":" + (sec < 10 ? "0" + sec : sec);
+                }, 1000);
+            });
+            stopTimerButton.addEventListener('click', function () {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+            });
+            let dropdown = document.querySelector('.dropdown');
+            dropdown.addEventListener('click', function (event) {
+                event.stopPropagation();
+                dropdown.classList.toggle('is-active');
+            });
+            window.addEventListener('click', function (e) {
+                if (dropdown.classList.contains('is-active')) {
+                    dropdown.classList.remove('is-active');
+                }
+            });
+
+
+            function toggleCreateTaskDialog() {
+                let dialog = document.getElementById('create_task_dialog');
+                dialog.classList.toggle('hidden');
+                dialog.classList.toggle('flex');
+            }
+
+            
+
+        </script>
+    </body>
+</html>
