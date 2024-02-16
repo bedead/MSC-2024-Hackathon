@@ -38,3 +38,8 @@ def blog_1():
 @base_page_bp.route("/blogs/team_management")
 def blog_2():
     return render_template("/blogs/2.html")
+
+
+@base_page_bp.route("/blogs/task_management")
+def blog_3():
+    return render_template("/blogs/3.html")
